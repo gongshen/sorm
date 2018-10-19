@@ -1,4 +1,5 @@
-package orm
+//查询数据库
+package sorm
 
 import (
 	"errors"

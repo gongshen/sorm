@@ -1,4 +1,4 @@
-package orm
+package sorm
 
 import (
 	"database/sql"
@@ -10,6 +10,19 @@ import (
 	"time"
 )
 
+//实现orm
+type Query struct {
+	db     *sql.DB
+	table  string
+	wheres []string
+	only   []string
+	limit  string
+	offset string
+	order  string
+	errs   []string
+}
+
+//select的
 func (q *Query) toSQL() string {
 	var where string
 	if len(q.wheres) > 0 {
