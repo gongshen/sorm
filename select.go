@@ -7,7 +7,8 @@ import (
 	"reflect"
 	"strings"
 )
-
+//如果要显示的只有一个字段，那么可以传入string,[]string类型的变量
+//如果要显示多个字段，那么必须传入struct类型的变量
 //Select() 需要传指针，不能仅仅声明一个指针变量：var user *User，需要传地址
 func (q *Query) Select(in interface{}) error {
 	if len(q.errs) != 0 {
@@ -76,9 +77,25 @@ func (q *Query) Select(in interface{}) error {
 		}
 		v.Set(sl)
 		for i := 0; i < v.Len(); i++ {
-			fmt.Println(v.Index(i))
+			fmt.Println(q.only[0],":",v.Index(i))
 		}
 		return nil
+
+	case reflect.Struct:
+		fmt.Println("查询结果：")
+		for rows.Next() {
+			destination, err := q.setElem(rows, t)
+			if err != nil {
+				return err
+			}
+			v.Set(destination.Elem())
+			t := v.Type()
+			for i := 0; i < t.NumField(); i++ {
+				tf := t.Field(i)
+				vf := v.Field(i)
+				fmt.Println(tf.Name, ":", vf)
+			}
+		}
 	default:
 		fmt.Println("查询结果：")
 		for rows.Next() {
@@ -87,12 +104,7 @@ func (q *Query) Select(in interface{}) error {
 				return err
 			}
 			v.Set(destination.Elem())
-			t:=v.Type()
-			for i:=0;i<t.NumField();i++{
-				tf:=t.Field(i)
-				vf:=v.Field(i)
-				fmt.Println(tf.Name,":",vf)
-			}
+			fmt.Println(v.Interface())
 		}
 	}
 	return nil

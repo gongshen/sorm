@@ -13,7 +13,7 @@ import (
 func (q *Query) toSQL() string {
 	var where string
 	if len(q.wheres) > 0 {
-		where = fmt.Sprintf(`where %s`, strings.Join(q.wheres," and "))
+		where = fmt.Sprintf(`where %s`, strings.Join(q.wheres, " and "))
 	}
 	sqlStr := fmt.Sprintf(`select %s from %s %s %s %s %s`, strings.Join(q.only, ","), q.table, where, q.order, q.limit, q.offset)
 	log.Printf(`select sql:%s`, sqlStr)
@@ -173,8 +173,8 @@ func format(v reflect.Value) string {
 		for i := 0; i < v.Len(); i++ {
 			//递归格式化
 			values = append(values, format(v.Index(i)))
-			return fmt.Sprintf("%s", strings.Join(values, ","))
 		}
+		return fmt.Sprintf("(%s)", strings.Join(values, ","))
 	//接口类型再剥调一层
 	case reflect.Interface:
 		return format(v.Elem())
