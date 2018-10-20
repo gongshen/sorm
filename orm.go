@@ -10,23 +10,10 @@ import (
 	"time"
 )
 
-//实现orm
-type Query struct {
-	db     *sql.DB
-	table  string
-	wheres []string
-	only   []string
-	limit  string
-	offset string
-	order  string
-	errs   []string
-}
-
-//select的
 func (q *Query) toSQL() string {
 	var where string
 	if len(q.wheres) > 0 {
-		where = fmt.Sprintf(`where %s`, q.wheres)
+		where = fmt.Sprintf(`where %s`, strings.Join(q.wheres," and "))
 	}
 	sqlStr := fmt.Sprintf(`select %s from %s %s %s %s %s`, strings.Join(q.only, ","), q.table, where, q.order, q.limit, q.offset)
 	log.Printf(`select sql:%s`, sqlStr)
@@ -129,7 +116,7 @@ func sKV(v reflect.Value) ([]string, []string) {
 			continue
 		}
 		//忽略无效、零值字段
-		if !vf.IsValid() || reflect.DeepEqual(vf.Interface(), reflect.Zero(vf.Type())) {
+		if !vf.IsValid() || reflect.DeepEqual(vf.Interface(), reflect.Zero(vf.Type()).Interface()) {
 			continue
 		}
 		//剥离指针
@@ -218,7 +205,6 @@ func Where(eq bool, in interface{}) (string, error) {
 	}
 	switch v.Kind() {
 	case reflect.String:
-		//return v.Interface().(string), nil
 		return in.(string), nil
 	case reflect.Struct:
 		keys, values = sKV(v)
@@ -238,14 +224,14 @@ func Where(eq bool, in interface{}) (string, error) {
 				wheres = append(wheres, fmt.Sprintf("%s in %s", key, values[idx]))
 				continue
 			}
-			wheres = append(wheres, fmt.Sprintf("%s = %s"), key, values[idx])
+			wheres = append(wheres, fmt.Sprintf("%s = %s", key, values[idx]))
 			continue
 		}
-		if strings.HasPrefix(values[idx], ")") && strings.HasSuffix(values[idx], ")") {
+		if strings.HasPrefix(values[idx], "(") && strings.HasSuffix(values[idx], ")") {
 			wheres = append(wheres, fmt.Sprintf("%s not in %s", key, values[idx]))
 			continue
 		}
-		wheres = append(wheres, fmt.Sprintf("%s != %s"), key, values[idx])
+		wheres = append(wheres, fmt.Sprintf("%s != %s", key, values[idx]))
 	}
 	return strings.Join(wheres, " and "), nil
 }
@@ -297,6 +283,7 @@ func sK(v reflect.Value) []string {
 		if tf.Anonymous {
 			continue
 		}
+
 		//剥离指针
 		for vf.Type().Kind() == reflect.Ptr {
 			vf = vf.Elem()

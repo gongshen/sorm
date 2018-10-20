@@ -51,6 +51,7 @@ func (q *Query) Select(in interface{}) error {
 	if err != nil {
 		return err
 	}
+
 	switch t.Kind() {
 	case reflect.Map:
 		return errors.New("Method Select: Type error")
@@ -86,7 +87,12 @@ func (q *Query) Select(in interface{}) error {
 				return err
 			}
 			v.Set(destination.Elem())
-			fmt.Println(v)
+			t:=v.Type()
+			for i:=0;i<t.NumField();i++{
+				tf:=t.Field(i)
+				vf:=v.Field(i)
+				fmt.Println(tf.Name,":",vf)
+			}
 		}
 	}
 	return nil
