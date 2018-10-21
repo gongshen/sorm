@@ -2,25 +2,12 @@
 package sorm
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
 	"reflect"
 	"strings"
 )
-
-//实现orm
-type Query struct {
-	db     *sql.DB
-	table  string
-	wheres []string
-	only   []string
-	limit  string
-	offset string
-	order  string
-	errs   []string
-}
 
 //insert into user (age,first_name,last_name) values (20,'Tom','One')
 func (q *Query) Insert(in interface{}) (int64, error) {

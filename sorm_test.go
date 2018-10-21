@@ -24,7 +24,6 @@ type User struct {
 func TestQuery_Insert(t *testing.T) {
 	ormDB, _ := Connect(dsn)
 	users := Table(ormDB, table)
-
 	user1 := &User{
 		Age:       11,
 		FirstName: "Tom",
@@ -39,7 +38,21 @@ func TestQuery_Insert(t *testing.T) {
 		"first_name": "Tom",
 		"last_name":  "Three",
 	}
-	_, err := users().Insert([]interface{}{user1, user2})
+	user4 := User{
+		ID:        99,
+		Age:       22,
+		FirstName: "Gong",
+		LastName:  "Shen",
+	}
+	//定义闭包传递参数
+	f := func(tx Dba) error {
+		if _, err := users(tx).Insert(user4); err != nil {
+			return err
+		}
+		return nil
+	}
+	err := Transaction(ormDB, f)
+	_, err = users().Insert([]interface{}{user1, user2})
 	_, err = users().Insert(user3)
 	if err != nil {
 		fmt.Printf("插入失败！Err：%v", err)
@@ -76,18 +89,43 @@ func TestQuery_Update(t *testing.T) {
 		FirstName: "z",
 		LastName:  "zy",
 	}
-	_, _ = users().Where("age > 10").Update(u1)
-	_, _ = users().Where("age > 10").Update(u2)
-	_, _ = users().Where("age =30").Update(u3)
+	u4 := User{
+		ID:        0,
+		FirstName: "Gong_U",
+		LastName:  "Shen_U",
+	}
+	f := func(tx Dba) error {
+		if _, err := users(tx).Where("age=99").Update(u4); err != nil {
+			return err
+		}
+		return nil
+	}
+	err := Transaction(ormDB, f)
+	_, err = users().Where("age > 10").Update(u1)
+	_, err = users().Where("age > 10").Update(u2)
+	_, err = users().Where("age =30").Update(u3)
+	if err != nil {
+		fmt.Println("更新失败！Error：", err)
+	} else {
+		fmt.Println("更新成功！")
+	}
 }
 
 func TestQuery_Delete(t *testing.T) {
 	ormDB, _ := Connect(dsn)
 	users := Table(ormDB, table)
-	w := map[string]interface{}{
+	w1 := map[string]interface{}{
 		"id": []int{1, 2, 3, 4, 5, 6, 7, 8},
 	}
-	_, err := users().Where(w, "age = 20").Delete()
+	w2 := "age = 99"
+	f := func(tx Dba) error {
+		if _, err := users(tx).Where(w2).Delete(); err != nil {
+			return err
+		}
+		return nil
+	}
+	err := Transaction(ormDB, f)
+	_, err = users().Where(w1, "age = 20").Delete()
 	if err != nil {
 		fmt.Println("删除失败！")
 	} else {

@@ -10,6 +10,24 @@ import (
 	"time"
 )
 
+//实现orm
+type Query struct {
+	db     Dba
+	table  string
+	wheres []string
+	only   []string
+	limit  string
+	offset string
+	order  string
+	errs   []string
+}
+
+type Dba interface {
+	Query(string, ...interface{}) (*sql.Rows, error)
+	Prepare(string)(*sql.Stmt,error)
+}
+
+
 func (q *Query) toSQL() string {
 	var where string
 	if len(q.wheres) > 0 {
@@ -94,12 +112,18 @@ func Connect(dsn string) (*sql.DB, error) {
 	return conn, conn.Ping()
 }
 
-//将数据库和表绑定
-func Table(db *sql.DB, tableName string) func() *Query {
-	return func() *Query {
+//将数据库和表绑定，可以区分普通操作和事务操作
+func Table(db *sql.DB, tableName string) func(...Dba) *Query {
+	return func(tx ...Dba) *Query {
+		if len(tx)==1{
+			return &Query{
+				db:    tx[0],
+				table: tableName,
+			}
+		}
 		return &Query{
-			db:    db,
-			table: tableName,
+			db: db,
+			table:tableName,
 		}
 	}
 }
